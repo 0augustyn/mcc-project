@@ -45,14 +45,14 @@ template <typename T>
 using step_range = typename range_proxy<T>::step_range_proxy;
 
 template <typename T>
-__device__ step_range<T> grid_stride_range(T begin, T end) {
+inline __device__ step_range<T> grid_stride_range(T begin, T end) {
   begin += blockDim.x * blockIdx.x + threadIdx.x;
   return range(begin, end).step(gridDim.x * blockDim.x);
 }
 /////////////////////////////////////////////////////////////////
 
 template <typename T, typename Predicate>
-__device__ void count_if(int *count, T *data, int n, Predicate p) {
+inline __device__ void count_if(int *count, T *data, int n, Predicate p) {
   for (auto i : grid_stride_range(0, n)) {
     if (p(data[i])) atomicAdd(count, 1);
   }
@@ -61,7 +61,7 @@ __device__ void count_if(int *count, T *data, int n, Predicate p) {
 // Use count_if with a lambda function that searches for x, y, z or w
 // Note the use of range-based for loop and initializer_list inside the functor
 // We use auto so we don't have to know the type of the functor or array
-__global__ void xyzw_frequency(int *count, char *text, int n) {
+inline __global__ void xyzw_frequency(int *count, char *text, int n) {
   const char letters[]{'a'};
 
   count_if(count, text, n, [&](char c) {
@@ -71,7 +71,7 @@ __global__ void xyzw_frequency(int *count, char *text, int n) {
   });
 }
 
-__global__ void xyzw_frequency_thrust_device(int *count, char *text, int n) {
+inline __global__ void xyzw_frequency_thrust_device(int *count, char *text, int n) {
   const char letters[]{'a'};
   *count = thrust::count_if(thrust::device, text, text + n, [=](char c) {
     for (const auto x : letters)
