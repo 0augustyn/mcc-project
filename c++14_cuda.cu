@@ -62,7 +62,7 @@ inline __device__ void count_if(int *count, T *data, int n, Predicate p) {
 // Note the use of range-based for loop and initializer_list inside the functor
 // We use auto so we don't have to know the type of the functor or array
 inline __global__ void xyzw_frequency(int *count, char *text, int n) {
-  const char letters[]{'a'};
+  const char letters[]{'x', 'y', 'z', 'w'};
 
   count_if(count, text, n, [&](char c) {
     for (const auto x : letters)
@@ -72,7 +72,7 @@ inline __global__ void xyzw_frequency(int *count, char *text, int n) {
 }
 
 inline __global__ void xyzw_frequency_thrust_device(int *count, char *text, int n) {
-  const char letters[]{'a'};
+  const char letters[]{'x', 'y', 'z', 'w'};
   *count = thrust::count_if(thrust::device, text, text + n, [=](char c) {
     for (const auto x : letters)
       if (c == x) return true;
@@ -85,7 +85,7 @@ inline __global__ void xyzw_frequency_thrust_device(int *count, char *text, int 
 #if 0 
 void xyzw_frequency_thrust_host(int *count, char *text, int n)
 {
-  const char letters[] {'a'};
+  const char letters[] {'x', 'y', 'z', 'w'};
   *count = thrust::count_if(thrust::host, text, text+n, [&](char c) {
     for (const auto x : letters) 
       if (c == x) return true;
@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
   std::chrono::steady_clock::time_point end=std::chrono::steady_clock::now();
 
   std::cout << "counted " << count
-            << " instances of 'a' in \"" << filename << "\""
+            << " instances of 'x', 'y', 'z', 'w' in \"" << filename << "\""
             << std::endl;
 			
   auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
