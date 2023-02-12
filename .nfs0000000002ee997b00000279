@@ -32,6 +32,8 @@
 #include <iostream>
 #include <helper_cuda.h>
 #include <chrono>
+#include <type_traits>
+#include <array>
 
 /////////////////////////////////////////////////////////////////
 // Some utility code to define grid_stride_range
@@ -51,32 +53,32 @@ inline __device__ step_range<T> grid_stride_range(T begin, T end) {
   begin += blockDim.x * blockIdx.x + threadIdx.x;
   return range(begin, end).step(gridDim.x * blockDim.x);
 }
-
-//simple operator overload - it allows you to add an integer to a grid_stride_range object 
-//and return a new grid_stride_range object with its begin value increased by the integer value
-
-//it's not actually used in any meaningful way in this code, it's just a representation of operator overloading
-//lhs - left hand side, rhs - right hand side
-template <typename T>
-inline __device__ step_range<T> operator+(const step_range<T> &lhs, const int &rhs) {
-  return range(lhs.begin() + rhs, lhs.end()).step(lhs.step());
-}
 /////////////////////////////////////////////////////////////////
 
 // Overloading function count_if to take either a functor or a char value
-// Simple SFINAE implementation - this function is enabled only when the type of Predicate is not char
-template <typename T, typename Predicate,
-			typename = typename std::enable_if<!std::is_same<Predicate, char>::value>::type>
-__device__ void count_if(int *count, T *data, int n, Predicate p) {
+
+// A variadic template for count_if
+template <typename T, typename... Args>
+__device__ void count_if(int *count, T *data, int n, char value, Args... args) {
   for (auto i : grid_stride_range(0, n)) {
-    if (p(data[i])) atomicAdd(count, 1);
+    if (data[i] == value || (... || (data[i] == args))) {
+      atomicAdd(count, 1);
+    }
   }
 }
 
-template <typename T>
-__device__ void count_if(int *count, T *data, int n, char value) {
+// SFINAE implementation to allow only when the first argument is of type char
+template <typename T, typename... Args>
+__device__ typename std::enable_if<std::is_same<char, T>::value>::type count_if(int *count, T *data, int n, Args... args) {
+  const std::array<T, sizeof...(Args) + 1> values{value, args...};
+
   for (auto i : grid_stride_range(0, n)) {
-    if (data[i] == value) atomicAdd(count, 1);
+    for (const auto x : values) {
+      if (data[i] == x) {
+        atomicAdd(count, 1);
+        break;
+      }
+    }
   }
 }
 
