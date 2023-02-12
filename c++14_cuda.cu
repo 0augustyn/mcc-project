@@ -51,10 +51,18 @@ inline __device__ step_range<T> grid_stride_range(T begin, T end) {
 }
 /////////////////////////////////////////////////////////////////
 
+// Overloading function count_if to take either a functor or a char value
 template <typename T, typename Predicate>
-inline __device__ void count_if(int *count, T *data, int n, Predicate p) {
+__device__ void count_if(int *count, T *data, int n, Predicate p) {
   for (auto i : grid_stride_range(0, n)) {
     if (p(data[i])) atomicAdd(count, 1);
+  }
+}
+
+template <typename T>
+__device__ void count_if(int *count, T *data, int n, char value) {
+  for (auto i : grid_stride_range(0, n)) {
+    if (data[i] == value) atomicAdd(count, 1);
   }
 }
 
