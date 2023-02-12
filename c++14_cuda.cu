@@ -44,6 +44,8 @@ using namespace util::lang;
 template <typename T>
 using step_range = typename range_proxy<T>::step_range_proxy;
 
+//compiler decides whether or not to actually inline the function based on a variety of factors such as code size and the optimization level
+
 template <typename T>
 inline __device__ step_range<T> grid_stride_range(T begin, T end) {
   begin += blockDim.x * blockIdx.x + threadIdx.x;
@@ -52,7 +54,9 @@ inline __device__ step_range<T> grid_stride_range(T begin, T end) {
 /////////////////////////////////////////////////////////////////
 
 // Overloading function count_if to take either a functor or a char value
-template <typename T, typename Predicate>
+// Simple SFINAE implementation - this function is enabled only when the type of Predicate is not char
+template <typename T, typename Predicate,
+			typename = typename std::enable_if<!std::is_same<Predicate, char>::value>::type>
 __device__ void count_if(int *count, T *data, int n, Predicate p) {
   for (auto i : grid_stride_range(0, n)) {
     if (p(data[i])) atomicAdd(count, 1);
