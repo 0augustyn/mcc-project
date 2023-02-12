@@ -32,6 +32,48 @@
 #include <iostream>
 #include <helper_cuda.h>
 #include <chrono>
+#include <vector>
+#include <random>
+
+
+//simple vector class with operator overloading for adding vectors and a randomized initialization:
+
+class Vector {
+public:
+    Vector(int n) : data(n) {
+        // Randomly initialize the vector with values between 0 and 100
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> dist(0, 100);
+
+        for (int i = 0; i < n; i++) {
+            data[i] = dist(gen);
+        }
+    }
+
+    Vector operator+(const Vector& other) const {
+        Vector result(data.size());
+        for (int i = 0; i < data.size(); i++) {
+            result.data[i] = data[i] + other.data[i];
+        }
+        return result;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Vector& vec) {
+        os << "[";
+        for (int i = 0; i < vec.data.size(); i++) {
+            os << vec.data[i];
+            if (i != vec.data.size() - 1) {
+                os << ", ";
+            }
+        }
+        os << "]";
+        return os;
+    }
+
+private:
+    std::vector<int> data;
+};
 
 /////////////////////////////////////////////////////////////////
 // Some utility code to define grid_stride_range
@@ -121,6 +163,8 @@ int main(int argc, char **argv) {
   std::chrono::steady_clock::time_point start=std::chrono::steady_clock::now();
 
   const char *filename = sdkFindFilePath("quovadis.txt", argv[0]);
+  
+  Vector v1(5), v2(5);
 
   int numBytes = 16 * 1048576;
   char *h_text = (char *)malloc(numBytes);
@@ -160,6 +204,12 @@ int main(int argc, char **argv) {
   std::cout << "counted " << count
             << " instances of 'x', 'y', 'z', 'w' in \"" << filename << "\""
             << std::endl;
+	
+
+  std::cout << "v1: " << v1 << std::endl;
+  std::cout << "v2: " << v2 << std::endl;
+  Vector v3 = v1 + v2;
+  std::cout << "v3 = v1 + v2: " << v3 << std::endl;
 			
   auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
   std::cout << "Execution time: " << duration.count() << " milliseconds" << std::endl;
