@@ -15,7 +15,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER ORasdadsa
  * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
  * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
@@ -31,6 +31,7 @@
 
 #include <iostream>
 #include <helper_cuda.h>
+#include <chrono>
 
 /////////////////////////////////////////////////////////////////
 // Some utility code to define grid_stride_range
@@ -94,6 +95,9 @@ void xyzw_frequency_thrust_host(int *count, char *text, int n)
 #endif
 
 int main(int argc, char **argv) {
+	
+  std::chrono::steady_clock::time_point start=std::chrono::steady_clock::now();
+
   const char *filename = sdkFindFilePath("quovadis.txt", argv[0]);
 
   int numBytes = 16 * 1048576;
@@ -128,13 +132,20 @@ int main(int argc, char **argv) {
       cudaMemcpy(&count, d_count, sizeof(int), cudaMemcpyDeviceToHost));
 
   // xyzw_frequency_thrust_host(&count, h_text, len);
+  
+  std::chrono::steady_clock::time_point end=std::chrono::steady_clock::now();
 
   std::cout << "counted " << count
             << " instances of 'a' in \"" << filename << "\""
             << std::endl;
+			
+  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+  std::cout << "Execution time: " << duration.count() << " milliseconds" << std::endl;
 
   checkCudaErrors(cudaFree(d_count));
   checkCudaErrors(cudaFree(d_text));
+  
+  
 
   return EXIT_SUCCESS;
 }
